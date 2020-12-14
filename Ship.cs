@@ -2,70 +2,67 @@ using System;
 
 public class Ship
 {
-    public Directions Direction { get; set; } = Directions.East;
-    public int XPosition { get; set; } = 0;
-    public int YPosition { get; set; } = 0;
+    public int ShipXPosition { get; set; } = 0;
+    public int ShipYPosition { get; set; } = 0;
+    public int WaypointRelativeXPosition { get; set; } = 10;
+    public int WaypointRelativeYPosition { get; set; } = 1;
 
-    private Directions[] Orientations = new [] { Directions.East, Directions.North, Directions.West, Directions.South };
-
-    public override string ToString() => $"Ship facing {Direction} at {XPosition} by {YPosition} "+
-        $"({Math.Abs(XPosition) + Math.Abs(YPosition)})";
+    public override string ToString() => $"Ship is at {ShipXPosition} by {ShipYPosition} " +
+        $"({Math.Abs(ShipXPosition) + Math.Abs(ShipYPosition)})";
 
     public void Apply(Instruction instruction)
     {
         switch (instruction.Direction)
         {
             case Directions.East:
-            {
-                XPosition += instruction.Steps;
-                break;
-            }
+                {
+                    WaypointRelativeXPosition += instruction.Steps;
+                    break;
+                }
             case Directions.West:
-            {
-                XPosition -= instruction.Steps;
-                break;
-            }
+                {
+                    WaypointRelativeXPosition -= instruction.Steps;
+                    break;
+                }
             case Directions.North:
-            {
-                YPosition += instruction.Steps;
-                break;
-            }
+                {
+                    WaypointRelativeYPosition += instruction.Steps;
+                    break;
+                }
             case Directions.South:
-            {
-                YPosition -= instruction.Steps;
-                break;
-            }
+                {
+                    WaypointRelativeYPosition -= instruction.Steps;
+                    break;
+                }
             case Directions.Forward:
-            {
-                Apply(new Instruction { Direction = Direction, Steps = instruction.Steps });
-                break;
-            }
+                {
+                    ShipXPosition += WaypointRelativeXPosition * instruction.Steps;
+                    ShipYPosition += WaypointRelativeYPosition * instruction.Steps;
+                    break;
+                }
             case Directions.Left:
-            {
-                var changesNeeded = instruction.Steps / 90;
-                var currentIndex = Array.IndexOf(Orientations, Direction);
-                var stepsNeeded = changesNeeded + currentIndex;
-                if (stepsNeeded >= 4)
                 {
-                    stepsNeeded -= 4;
+                    var rad = instruction.Steps.Radians();
+                    var newX = Convert.ToInt32(WaypointRelativeXPosition * Math.Cos(rad)) - Convert.ToInt32(WaypointRelativeYPosition * Math.Sin(rad));
+                    var newY = Convert.ToInt32(WaypointRelativeXPosition * Math.Sin(rad)) + Convert.ToInt32(WaypointRelativeYPosition * Math.Cos(rad));
+                    WaypointRelativeXPosition = newX;
+                    WaypointRelativeYPosition = newY;
+                    break;
                 }
-
-                Direction = Orientations[stepsNeeded];
-                break;
-            }
             case Directions.Right:
-            {
-                var changesNeeded = instruction.Steps / 90;
-                var currentIndex = Array.IndexOf(Orientations, Direction);
-                var stepsNeeded = currentIndex - changesNeeded;
-                if (stepsNeeded < 0)
                 {
-                    stepsNeeded += 4;
+                    var rad = (instruction.Steps * -1).Radians();
+                    var newX = Convert.ToInt32(WaypointRelativeXPosition * Math.Cos(rad)) - Convert.ToInt32(WaypointRelativeYPosition * Math.Sin(rad));
+                    var newY = Convert.ToInt32(WaypointRelativeXPosition * Math.Sin(rad)) + Convert.ToInt32(WaypointRelativeYPosition * Math.Cos(rad));
+                    WaypointRelativeXPosition = newX;
+                    WaypointRelativeYPosition = newY;
+                    break;
                 }
-
-                Direction = Orientations[stepsNeeded];
-                break;
-            }
         }
     }
+}
+
+public static class Extensions
+{
+    public static double Radians(this int angle) => (Math.PI / 180) * angle;
 }
